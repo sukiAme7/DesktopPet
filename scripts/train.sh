@@ -9,5 +9,5 @@
 source /work/home/shiyan_dong/miniconda3/etc/profile.d/conda.sh
 conda activate DesktopPet
 
-
+export HF_HUB_OFFLINE=1
 python  ./src/llm/train.py --config config/train.yaml
