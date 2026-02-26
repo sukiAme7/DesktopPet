@@ -1,0 +1,21 @@
+model:
+  model_path: "Qwen" 
+  max_length: 1024
+
+lora:
+  r: 32
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+
+training:
+  output_dir: "./models/fine_tuned/v1"
+  learning_rate: 2.0e-4
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 4
+  num_train_epochs: 3
+  save_steps: 100
+  logging_steps: 10
+
+data:
+  train_file: "./data/processed/dataset.jsonl"
