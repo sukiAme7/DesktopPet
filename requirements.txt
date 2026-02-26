@@ -3,5 +3,5 @@ torchvision==0.20.1
 transformers 
 peft
 accelerate
-datasets
 bitsandbytes
+datasets
