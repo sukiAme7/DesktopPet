@@ -5,3 +5,4 @@ peft
 accelerate
 bitsandbytes
 datasets
+dotenv
