@@ -56,8 +56,8 @@ DEEPSEEK_API_KEY=sk-你的密钥
 
 ```javascript
 // 可选模型：
-const modelUrl = '../../assets/haruto/haruto.model3.json';   // Haruto（默认）
-// const modelUrl = '../../assets/koharu/koharu.model3.json';
+const modelUrl = '../../assets/koharu/koharu.model3.json';// Koharu（默认）
+const modelUrl = '../../assets/haruto/haruto.model3.json';   
 ```
 ### 3.Run
 
