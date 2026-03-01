@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>AI Desktop Pet</title>
+    <style>
+        /* 🌟 1. 网页整体：铺满全屏，并设为基础拖拽层 */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: transparent;
+            -webkit-app-region: drag;
+            /* 全局默认可拖拽 */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* 🌟 2. Live2D 画布：安安静静当底图，删掉多余的 drag 属性 */
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* 🌟 3. 对话气泡：免拖拽特权 */
+        #chat-bubble {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            font-size: 14px;
+            color: #333;
+            max-width: 250px;
+            word-wrap: break-word;
+            z-index: 999;
+
+            /* 交互元素必须声明 no-drag 和 pointer-events */
+            -webkit-app-region: no-drag;
+            pointer-events: auto;
+
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        /* 🌟 4. 输入框区域：免拖拽特权，强行夺回点击权 */
+        #input-area {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+
+            /* 交互元素必须声明 no-drag 和 pointer-events */
+            -webkit-app-region: no-drag;
+            pointer-events: auto;
+        }
+
+        #input-area input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 160px;
+        }
+
+        #input-area button {
+            border: none;
+            background: #ffb6c1;
+            color: white;
+            border-radius: 15px;
+            padding: 5px 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/live2dcubismcore@1.0.2/live2dcubismcore.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pixi.js@6.5.2/dist/browser/pixi.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display/dist/cubism4.min.js"></script>
+</head>
+
+<body>
+
+    <div id="chat-bubble"></div>
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="和我说说话吧..." onkeypress="handleEnter(event)" />
+        <button onclick="sendMessage()">发送</button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        // 暴露给插件
+        window.PIXI = PIXI;
+
+        // --- 前后端通信逻辑 ---
+        // 🌟 新增：在外面定一个全局变量，用来存定时器
+        let bubbleTimer = null;
+
+        async function sendMessage() {
+            const inputElement = document.getElementById('user-input');
+            const bubbleElement = document.getElementById('chat-bubble');
+            const message = inputElement.value.trim();
+
+            if (!message) return;
+
+            // 🌟 细节：如果用户连续发消息，先打断之前的倒计时，防止气泡闪烁
+            if (bubbleTimer) {
+                clearTimeout(bubbleTimer);
+                bubbleTimer = null;
+            }
+
+            inputElement.value = '';
+
+            // 展现气泡，并触发渐现动画
+            bubbleElement.style.display = 'block';
+            setTimeout(() => { bubbleElement.style.opacity = 1; }, 10);
+            bubbleElement.innerText = "正在思考中...";
+
+            try {
+                // 呼叫后端
+                const response = await fetch('http://localhost:8000/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: message })
+                });
+
+                const data = await response.json();
+                bubbleElement.innerText = data.reply;
+
+                // 🌟 核心：设下 5 秒的倒计时
+                bubbleTimer = setTimeout(() => {
+                    // 1. 先触发 CSS 的透明度渐变 (0.5秒)
+                    bubbleElement.style.opacity = 0;
+
+                    // 2. 等渐变动画播完，再把元素彻底隐藏，不挡视线
+                    setTimeout(() => {
+                        if (bubbleElement.style.opacity == 0) {
+                            bubbleElement.style.display = 'none';
+                        }
+                    }, 500);
+                }, 5000); // 5000 毫秒 = 5 秒
+
+            } catch (error) {
+                bubbleElement.innerText = "啊哦，连接不到大脑(后端服务器)了~";
+                console.error(error);
+            }
+        }
+
+        // 绑定回车键发送
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // --- Live2D 初始化逻辑 ---
+        async function initPet() {
+            const app = new PIXI.Application({
+                view: document.getElementById('canvas'),
+                transparent: true,
+                autoDensity: true,
+                resizeTo: window
+            });
+
+            // const modelUrl = './assets/koharu/koharu.model3.json';
+            const modelUrl = './assets/haruto/haruto.model3.json';
+
+            try {
+                const live2dModel = await PIXI.live2d.Live2DModel.from(modelUrl);
+                app.stage.addChild(live2dModel);
+
+                live2dModel.scale.set(0.15);
+                live2dModel.x = app.screen.width / 2 - live2dModel.width / 2;
+                live2dModel.y = app.screen.height / 2 - live2dModel.height / 2;
+
+                // 鼠标视线跟随
+                document.body.addEventListener('mousemove', (event) => {
+                    live2dModel.focus(event.clientX, event.clientY);
+                });
+
+            } catch (error) {
+                console.error("模型加载失败了！", error);
+            }
+        }
+
+        initPet();
+    </script>
+</body>
+
+</html>
