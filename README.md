@@ -1,5 +1,3 @@
-
-
 # 🌟 AI Live2D Desktop Pet 
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue) ![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C) ![License](https://img.shields.io/badge/License-MIT-yellow)
@@ -72,7 +70,7 @@ python src/api/api.py
 启动前端:
 
 ```bash
+cd src/gui
 npm install  
-npm start --prefix src/gui
+npm start 
 ```
-
