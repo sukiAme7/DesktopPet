@@ -6,3 +6,5 @@ accelerate
 bitsandbytes
 datasets
 dotenv
+mcp
+httpx
