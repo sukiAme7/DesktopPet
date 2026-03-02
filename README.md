@@ -45,7 +45,7 @@ Then unzip the file.
 
 ### 2.env
 
-编辑 `.env` 文件：
+当前目录下创建 `.env` 文件并编辑：
 
 ```env
 DEEPSEEK_API_KEY=sk-你的密钥
