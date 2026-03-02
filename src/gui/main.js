@@ -1,21 +1,28 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 
 function createWindow() {
     const win = new BrowserWindow({
-        width: 320,          // 收紧宽度，减少桌面的“隐形阻挡”区域
-        height: 450,         // 收紧高度
-        transparent: true,   // 背景全透明
-        frame: false,        // 无边框模式
-        alwaysOnTop: true,   // 永远置顶，不被其他网页或文件夹挡住
-        hasShadow: false,    // 去除系统默认阴影，更加自然
+        width: 600,
+        height: 520,
+        transparent: true,
+        frame: false,
+        alwaysOnTop: true,
+        hasShadow: false,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            webSecurity: false // 允许跨域和本地文件读取
+            webSecurity: false
         }
     })
 
     win.loadFile('index.html')
+
+    // NOTE: 手动实现窗口拖拽，替代 -webkit-app-region: drag
+    // 因为 drag 会吞掉所有鼠标事件，导致 click 无法触发
+    ipcMain.on('window-drag', (event, { dx, dy }) => {
+        const [x, y] = win.getPosition()
+        win.setPosition(x + dx, y + dy)
+    })
 }
 
 app.whenReady().then(createWindow)
