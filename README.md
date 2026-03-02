@@ -6,6 +6,7 @@
 
 - [2026-2-23] Created the repo.
 - [2026-3-01] Test the MVP.
+- [2026-3-02] 接入高德地图MCP Server:支持天气查询、路径查询等功能.
 
 ## 📝 TODO 
 - [x] Release the MVP
@@ -48,15 +49,19 @@ Then unzip the file.
 
 ```env
 DEEPSEEK_API_KEY=sk-你的密钥
+AMAP_API_KEY=输入AMAP的密钥
 ```
 
-> 💡 测试：DeepSeek API 密钥获取地址：https://platform.deepseek.com/
+> 💡DeepSeek API 密钥获取地址：https://platform.deepseek.com/
+>
+> 💡高德MCP API Key 地址:  https://lbs.amap.com/api/mcp-server/create-project-and-key
 
 编辑 `src/gui/index.html` 第 184-185 行，修改 `modelUrl` 即可切换不同的 Live2D 模型：
 
 ```javascript
 // 可选模型：
-const modelUrl = '../../assets/koharu/koharu.model3.json';// Koharu（默认）
+const modelUrl = '../../assets/hutao/1.model3.json'; // hutao（默认）
+//const modelUrl = '../../assets/koharu/koharu.model3.json';
 // const modelUrl = '../../assets/haruto/haruto.model3.json';   
 ```
 ### 3.Run
