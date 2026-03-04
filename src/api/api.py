@@ -157,6 +157,12 @@ TOOLS = [
 ]
 
 
+# NOTE: 滑动窗口记忆 —— 只保留最近 MAX_HISTORY 条消息（即 MAX_HISTORY/2 轮对话）
+# 工具调用的中间消息不写入历史，避免污染上下文
+MAX_HISTORY = 20
+conversation_history: list[dict] = []
+
+
 class ChatRequest(BaseModel):
     text: str
 
@@ -173,10 +179,15 @@ async def chat_endpoint(request: ChatRequest):
     user_message = request.text
     logger.info("[前端输入] %s", user_message)
 
-    messages = [
-        {"role": "system", "content": PROMPT},
-        {"role": "user", "content": user_message}
-    ]
+    # 追加本轮用户消息到历史
+    conversation_history.append({"role": "user", "content": user_message})
+
+    # 滑动窗口：超出上限时，从头部裁剪旧消息
+    if len(conversation_history) > MAX_HISTORY:
+        conversation_history[:] = conversation_history[-MAX_HISTORY:]
+
+    # 构建完整上下文：系统提示 + 历史窗口
+    messages = [{"role": "system", "content": PROMPT}] + conversation_history
 
     try:
         # === 第一轮：让 LLM 判断是否需要调用工具 ===
@@ -240,6 +251,9 @@ async def chat_endpoint(request: ChatRequest):
         else:
             # 普通对话，直接用第一轮结果
             reply_text = message.content
+
+        # 将 AI 最终回复写入历史（工具中间消息不写入，保持历史干净）
+        conversation_history.append({"role": "assistant", "content": reply_text})
 
         logger.info("[DeepSeek 输出] %s", reply_text)
         return {"reply": reply_text}
